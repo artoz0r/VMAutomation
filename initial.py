@@ -1,3 +1,19 @@
+# 
+# Written by Artem Chatlikov
+# https://github.com/artoz0r/
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Just a skellington to help me get started"""
 
 import atexit
@@ -9,9 +25,9 @@ from pyVmomi import vmodl
 
 ## Couldn't figure out how to connect to vCenter in my case so I am using "hello_world_vcenter.py" as baseline
 
-def get_args(): ## Using this as a temporary solution while thinking about how I can hide variables in the best possible way
-    """Get command line args from the user.
-    """
+def get_args(): # Get arguments: In test environment from console with flags, later on frontend will handle this
+    """Get command line args from the user."""
+
     parser = argparse.ArgumentParser(
         description='Standard Arguments for talking to vCenter')
 
@@ -27,16 +43,36 @@ def get_args(): ## Using this as a temporary solution while thinking about how I
                         default=443,
                         action='store',
                         help='Port to connect on')
-
+    # username to vCenter
     parser.add_argument('-u', '--user',
                         required=True,
                         action='store',
                         help='User name to use when connecting to host')
-
+    # password for vCenter user
     parser.add_argument('-p', '--password',
                         required=False,
                         action='store',
                         help='Password to use when connecting to host')
+    # flag to signal program to create a virtual machine with user parameters
+    parser.add_argument('-c', '--createvm',
+    					required=False,
+    					action='store',
+    					help='Argument to create virtual machine')
+    # flag to signal program to start a virtual machine
+    parser.add_argument('-k', '--startvm',
+    					required=False,
+    					action='store',
+    					help='Argument to start a virtual machine')
+    # flag to signal program to shut down a virtual machine
+    parser.add_argument('-d', '--shutdownvm',
+    					required=False,
+    					action='store',
+    					help='Argument to shut down a virtual machine')
+    # flag to signal program to delete a virtual machine
+    parser.add_argument('-e', '--vmdelete',
+    					required=False,
+    					action='store',
+    					help='Argument to delete a virtual machine')
 
     args = parser.parse_args()
 
@@ -61,12 +97,8 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-def vmrequest(userid, diskrequest,processorrequest,ramrequest): ## Incoming request from api with user defined parameters
-	pass
-
-def vmcreate(): ## Creating a virtual machine in vCenter
-	pass
+def vmcreate(userid, diskrequest,processorrequest,ramrequest): ## Incoming request from api with user defined parameters and
+	pass														## Creating a virtual machine in vCenter
 
 def vmstart(): ## Starting a virtual machine in vCenter
 	pass
