@@ -55,24 +55,24 @@ def get_args(): # Get arguments: In test environment from console with flags, la
                         help='Password to use when connecting to host')
     # flag to signal program to create a virtual machine with user parameters
     parser.add_argument('-c', '--createvm',
-    					required=False,
-    					action='store',
-    					help='Argument to create virtual machine')
+                        required=False,
+                        action='store',
+                        help='Argument to create virtual machine')
     # flag to signal program to start a virtual machine
     parser.add_argument('-k', '--startvm',
-    					required=False,
-    					action='store',
-    					help='Argument to start a virtual machine')
+                        required=False,
+                        action='store',
+                        help='Argument to start a virtual machine')
     # flag to signal program to shut down a virtual machine
     parser.add_argument('-d', '--shutdownvm',
-    					required=False,
-    					action='store',
-    					help='Argument to shut down a virtual machine')
+                        required=False,
+                        action='store',
+                        help='Argument to shut down a virtual machine')
     # flag to signal program to delete a virtual machine
     parser.add_argument('-e', '--vmdelete',
-    					required=False,
-    					action='store',
-    					help='Argument to delete a virtual machine')
+                        required=False,
+                        action='store',
+                        help='Argument to delete a virtual machine')
 
     args = parser.parse_args()
 
