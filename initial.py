@@ -17,9 +17,13 @@
 import atexit
 import argparse
 import getpass
+import hashlib
+
+import requests
 
 from pyVim import connect
 from pyVmomi import vmodl
+from pyVmomi import vim
 
 ## Couldn't figure out how to connect to vCenter in my case so I am using "hello_world_vcenter.py" as baseline
 
@@ -86,42 +90,44 @@ def get_args(): # Get arguments: In test environment from console with flags, la
                    (args.host, args.user))
     return args
 
+args = get_args()
+service_instance = connect.SmartConnect(host=args.host,
+                                                user=args.user,
+                                                pwd=args.password,
+                                                port=int(args.port))
+
+atexit.register(connect.Disconnect, service_instance)
+
+content = service_instance.RetrieveContent()
+datacenter = content.rootFolder.childEntity[0]
+vm_folder = datacenter.vmFolder
+hosts = datacenter.hostFolder.childEntity
+resource_pool = hosts[0].resourcePool
+
 def main():
 
-    args = get_args()
-    	try:
-	        service_instance = connect.SmartConnect(host=args.host,
-	                                            user=args.user,
-	                                            pwd=args.password,
-	                                            port=int(args.port))
-
-	        atexit.register(connect.Disconnect, service_instance)
-
-    if args.createvm == True:
-    	vmcreate()
-    elif args.startvm == True:
-    	vmstart()
-    elif args.shutdownvm == True:
-    	vmshutdown()
-    elif args.deletevm == True:
-    	vmdelete()
-    else:
-    	print "No action defined."
+    if args.createvm == 'yes':
+        vmcreate()
+    elif args.startvm == 'yes':
+        vmstart()
+    elif args.shutdownvm == 'yes':
+        vmshutdown()
+    elif args.deletevm == 'yes':
+        vmdelete()
 
 # Start program
-if __name__ == "__main__":
-    main()
 
-def vmcreate(): ## Incoming request from api with user defined parameters and
-	    datastore_path = '[datastore1] vm1'
 
-    vmx_file = vim.vm.FileInfo(logDirectory=None,			## Creating a virtual machine in vCenter
+def vmcreate(): ## Incoming request from api with user defined parameters and creating a virtual machine in vCenter
+    datastore_path = '[ESXI2] vm1'
+
+    vmx_file = vim.vm.FileInfo(logDirectory=None,
                                snapshotDirectory=None,
                                suspendDirectory=None,
                                vmPathName=datastore_path)
 
     config = vim.vm.ConfigSpec(
-                                name=testi_kone,
+                                name="testi_kone",
                                 memoryMB=1024,
                                 numCPUs=1,
                                 files=vmx_file,
@@ -129,18 +135,18 @@ def vmcreate(): ## Incoming request from api with user defined parameters and
                                 version='vmx-08'
                               )
 
-    hostobj = <get the esx host object>
+    task = vm_folder.CreateVM_Task(config=config, pool=resource_pool)
 
-    vm_folder = hostobj.vm[0].parent
-    resource_pool = hostobj.vm[0].resourcePool
+    print "Creating a new virtual machine"
 
-    task = vm_folder.CreateVM_Task(config=config, pool=resource_pool)				
+if __name__ == "__main__":
+    main()
 
 def vmstart(): ## Starting a virtual machine in vCenter
-	pass
+    pass
 
 def vmshutdown(): ## Shutting down a virtual machine in vCenter
-	pass
+    pass
 
 def vmdelete(): ## Deleting a virtual machine from disk in vCenter
-	pass
+    pass
