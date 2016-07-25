@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Just a skellington to help me get started"""
-
 import atexit
 import argparse
 import getpass
@@ -43,33 +41,39 @@ def get_args(): # Get arguments: In test environment from console with flags, la
                         default=443,
                         action='store',
                         help='Port to connect on')
+
     # username to vCenter
     parser.add_argument('-u', '--user',
                         required=True,
                         action='store',
                         help='User name to use when connecting to host')
+
     # password for vCenter user
     parser.add_argument('-p', '--password',
                         required=False,
                         action='store',
                         help='Password to use when connecting to host')
+
     # flag to signal program to create a virtual machine with user parameters
     parser.add_argument('-c', '--createvm',
                         required=False,
                         action='store',
                         help='Argument to create virtual machine')
+
     # flag to signal program to start a virtual machine
     parser.add_argument('-k', '--startvm',
                         required=False,
                         action='store',
                         help='Argument to start a virtual machine')
+
     # flag to signal program to shut down a virtual machine
     parser.add_argument('-d', '--shutdownvm',
                         required=False,
                         action='store',
                         help='Argument to shut down a virtual machine')
+
     # flag to signal program to delete a virtual machine
-    parser.add_argument('-e', '--vmdelete',
+    parser.add_argument('-e', '--deletevm',
                         required=False,
                         action='store',
                         help='Argument to delete a virtual machine')
@@ -85,20 +89,52 @@ def get_args(): # Get arguments: In test environment from console with flags, la
 def main():
 
     args = get_args()
-    try:
-        service_instance = connect.SmartConnect(host=args.host,
-                                                user=args.user,
-                                                pwd=args.password,
-                                                port=int(args.port))
+    	try:
+	        service_instance = connect.SmartConnect(host=args.host,
+	                                            user=args.user,
+	                                            pwd=args.password,
+	                                            port=int(args.port))
 
-        atexit.register(connect.Disconnect, service_instance)
+	        atexit.register(connect.Disconnect, service_instance)
+
+    if args.createvm == True:
+    	vmcreate()
+    elif args.startvm == True:
+    	vmstart()
+    elif args.shutdownvm == True:
+    	vmshutdown()
+    elif args.deletevm == True:
+    	vmdelete()
+    else:
+    	print "No action defined."
 
 # Start program
 if __name__ == "__main__":
     main()
 
-def vmcreate(userid, diskrequest,processorrequest,ramrequest): ## Incoming request from api with user defined parameters and
-	pass														## Creating a virtual machine in vCenter
+def vmcreate(): ## Incoming request from api with user defined parameters and
+	    datastore_path = '[datastore1] vm1'
+
+    vmx_file = vim.vm.FileInfo(logDirectory=None,			## Creating a virtual machine in vCenter
+                               snapshotDirectory=None,
+                               suspendDirectory=None,
+                               vmPathName=datastore_path)
+
+    config = vim.vm.ConfigSpec(
+                                name=testi_kone,
+                                memoryMB=1024,
+                                numCPUs=1,
+                                files=vmx_file,
+                                guestId=None,
+                                version='vmx-08'
+                              )
+
+    hostobj = <get the esx host object>
+
+    vm_folder = hostobj.vm[0].parent
+    resource_pool = hostobj.vm[0].resourcePool
+
+    task = vm_folder.CreateVM_Task(config=config, pool=resource_pool)				
 
 def vmstart(): ## Starting a virtual machine in vCenter
 	pass
