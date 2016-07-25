@@ -115,9 +115,6 @@ def main():
     elif args.deletevm == 'yes':
         vmdelete()
 
-# Start program
-
-
 def vmcreate(): ## Incoming request from api with user defined parameters and creating a virtual machine in vCenter
     datastore_path = '[ESXI2] vm1'
 
@@ -139,9 +136,6 @@ def vmcreate(): ## Incoming request from api with user defined parameters and cr
 
     print "Creating a new virtual machine"
 
-if __name__ == "__main__":
-    main()
-
 def vmstart(): ## Starting a virtual machine in vCenter
     pass
 
@@ -150,3 +144,7 @@ def vmshutdown(): ## Shutting down a virtual machine in vCenter
 
 def vmdelete(): ## Deleting a virtual machine from disk in vCenter
     pass
+
+# Start program
+if __name__ == "__main__":
+    main()
