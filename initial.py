@@ -31,7 +31,7 @@ def get_args(): # Get arguments: In test environment from console with flags, la
     """Get command line args from the user."""
 
     parser = argparse.ArgumentParser(
-        description='Standard Arguments for talking to vCenter')
+        description='Arguments for running the program')
 
     # because -h is reserved for 'help' we use -s for service
     parser.add_argument('-s', '--host',
@@ -82,6 +82,12 @@ def get_args(): # Get arguments: In test environment from console with flags, la
                         action='store',
                         help='Argument to delete a virtual machine')
 
+    # get virtual machine name for multiple purposes (adding disk, nic...)
+    parser.add_argument('-n', '--vm-name',
+                        required=True,
+                        action='store',
+                        help='Name of the virtual machine we want to work on')
+
     args = parser.parse_args()
 
     if not args.password:
@@ -91,6 +97,7 @@ def get_args(): # Get arguments: In test environment from console with flags, la
     return args
 
 args = get_args()
+
 service_instance = connect.SmartConnect(host=args.host,
                                                 user=args.user,
                                                 pwd=args.password,
@@ -115,6 +122,16 @@ def main():
     elif args.deletevm == 'yes':
         vmdelete()
 
+def get_obj(content, vimtype, name): ## Used for retrieving objects from vCenter
+    obj = None
+    container = content.viewManager.CreateContainerView(
+        content.rootFolder, vimtype, True)
+    for c in container.view:
+        if c.name == name:
+            obj = c
+            break
+    return obj
+
 def vmcreate(): ## Incoming request from api with user defined parameters and creating a virtual machine in vCenter
     datastore_path = '[ESXI2] vm1'
 
@@ -124,7 +141,7 @@ def vmcreate(): ## Incoming request from api with user defined parameters and cr
                                vmPathName=datastore_path)
 
     config = vim.vm.ConfigSpec(
-                                name="testi_kone",
+                                name=args.vm_name,
                                 memoryMB=1024,
                                 numCPUs=1,
                                 files=vmx_file,
@@ -134,7 +151,11 @@ def vmcreate(): ## Incoming request from api with user defined parameters and cr
 
     task = vm_folder.CreateVM_Task(config=config, pool=resource_pool)
 
-    print "Creating a new virtual machine"
+    print "--- Creating a new virtual machine ---"
+
+    vm = None
+    content = service_instance.RetrieveContent()
+    vm = get_obj(content, [vim.VirtualMachine], args.vm_name)
 
 def vmstart(): ## Starting a virtual machine in vCenter
     pass
