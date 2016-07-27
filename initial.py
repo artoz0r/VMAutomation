@@ -88,6 +88,20 @@ def get_args(): # Get arguments: In test environment from console with flags, la
                         action='store',
                         help='Name of the virtual machine we want to work on')
 
+    # Define VM disk type, thin or thick provisioned (new vm)
+    parser.add_argument('--disk-type',
+                        required=False,
+                        action='store',
+                        default='thin',
+                        choices=['thick', 'thin'],
+                        help='thick or thin')
+
+    # Define disk size (new vm)
+    parser.add_argument('--disk-size',
+                        required=True,
+                        action='store',
+                        help='disk size, in GB, to add to the VM')
+
     args = parser.parse_args()
 
     if not args.password:
@@ -111,17 +125,6 @@ vm_folder = datacenter.vmFolder
 hosts = datacenter.hostFolder.childEntity
 resource_pool = hosts[0].resourcePool
 
-def main():
-
-    if args.createvm == 'yes':
-        vmcreate()
-    elif args.startvm == 'yes':
-        vmstart()
-    elif args.shutdownvm == 'yes':
-        vmshutdown()
-    elif args.deletevm == 'yes':
-        vmdelete()
-
 def get_obj(content, vimtype, name): ## Used for retrieving objects from vCenter
     obj = None
     container = content.viewManager.CreateContainerView(
@@ -131,6 +134,8 @@ def get_obj(content, vimtype, name): ## Used for retrieving objects from vCenter
             obj = c
             break
     return obj
+
+vm = get_obj(content, [vim.VirtualMachine], args.vm_name)
 
 def vmcreate(): ## Incoming request from api with user defined parameters and creating a virtual machine in vCenter
     datastore_path = '[ESXI2] vm1'
@@ -154,8 +159,46 @@ def vmcreate(): ## Incoming request from api with user defined parameters and cr
     print "--- Creating a new virtual machine ---"
 
     vm = None
-    content = service_instance.RetrieveContent()
-    vm = get_obj(content, [vim.VirtualMachine], args.vm_name)
+
+    if vm == get_obj(content, [vim.VirtualMachine], args.vm_name):
+    	print "Looking for vm"
+        add_disk(vm, service_instance, args.disk_size, args.disk_type)
+    else:
+        print "--- VM not found ---"
+
+def add_disk(vm, service_instance, disk_size, disk_type):
+        spec = vim.vm.ConfigSpec()
+        # get all disks on a VM, set unit_number to the next available
+        for dev in vm.config.hardware.device:
+            if hasattr(dev.backing, 'fileName'):
+                unit_number = int(dev.unitNumber) + 1
+                # unit_number 7 reserved for scsi controller
+                if unit_number == 7:
+                    unit_number += 1
+                if unit_number >= 16:
+                    print "Maximum of 15 disks supported for each VM"
+                    return
+            if isinstance(dev, vim.vm.device.VirtualSCSIController):
+                controller = dev
+        # add disk here
+        dev_changes = []
+        new_disk_kb = int(disk_size) * 1024 * 1024
+        disk_spec = vim.vm.device.VirtualDeviceSpec()
+        disk_spec.fileOperation = "create"
+        disk_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
+        disk_spec.device = vim.vm.device.VirtualDisk()
+        disk_spec.device.backing = \
+            vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
+        if disk_type == 'thin':
+            disk_spec.device.backing.thinProvisioned = True
+        disk_spec.device.backing.diskMode = 'persistent'
+        disk_spec.device.unitNumber = unit_number
+        disk_spec.device.capacityInKB = new_disk_kb
+        disk_spec.device.controllerKey = controller.key
+        dev_changes.append(disk_spec)
+        spec.deviceChange = dev_changes
+        vm.ReconfigVM_Task(spec=spec)
+        print "%sGB disk added to %s" % (disk_size, vm.config.name)
 
 def vmstart(): ## Starting a virtual machine in vCenter
     pass
@@ -165,6 +208,19 @@ def vmshutdown(): ## Shutting down a virtual machine in vCenter
 
 def vmdelete(): ## Deleting a virtual machine from disk in vCenter
     pass
+
+def main():
+
+    if args.createvm == 'yes':
+        vmcreate()
+    elif args.startvm == 'yes':
+        vmstart()
+    elif args.shutdownvm == 'yes':
+        vmshutdown()
+    elif args.deletevm == 'yes':
+        vmdelete()
+    elif disk_size > 0:
+        add_disk(vm, service_instance, args.disk_size, args.disk_type)
 
 # Start program
 if __name__ == "__main__":
